@@ -36,7 +36,7 @@ include(mongocxx)
 
 add_subdirectory(src)
 
-if(${BUILD_TEST})
+if(${BUILD_TESTS})
 	include(CTest)
 	enable_testing()
 	add_subdirectory(test)
