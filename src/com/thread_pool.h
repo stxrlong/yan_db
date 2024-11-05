@@ -23,7 +23,7 @@ class ThreadPool {
     };
 
 public:
-    ThreadPool(const std::string &name, const int size = 1);
+    ThreadPool(const std::string &name, const int workers = 1, const size_t queue_size = 8192);
     ~ThreadPool();
 
     template <typename F, typename... Args>
@@ -90,7 +90,7 @@ inline auto ThreadPool::insert(F &&f, Args &&...args) ->
     if (!elem) throw std::runtime_error("out of memory");
 
     auto i = ++seq_ % get_consumer_num();
-    return consumers_[i].queue_->enqueue(elem);
+    return consumers_[i].queue_->try_enqueue(elem);
 }
 
 template <typename F, typename... Args>
@@ -103,7 +103,7 @@ inline bool ThreadPool::insert(const std::string &key, F &&f, Args &&...args) {
 
     std::hash<std::string> hasher;
     auto i = hasher(key) % get_consumer_num();
-    return consumers_[i].queue_->enqueue(elem);
+    return consumers_[i].queue_->try_enqueue(elem);
 }
 
 template <typename F, typename... Args>
@@ -116,7 +116,7 @@ inline bool ThreadPool::insert(const uint32_t num, F &&f, Args &&...args) {
         new std::function<void()>(std::bind(std::forward<F>(f), std::forward<Args>(args)...));
     if (!elem) throw std::runtime_error("out of memory");
 
-    return consumers_[num].queue_->enqueue(elem);
+    return consumers_[num].queue_->try_enqueue(elem);
 }
 
 template <typename F, typename... Args>
@@ -134,7 +134,7 @@ inline auto ThreadPool::submit(const std::string &key, F &&f, Args &&...args)
 
     std::hash<std::string> hasher;
     auto i = hasher(key) % get_consumer_num();
-    if (!consumers_[i].queue_->enqueue(elem)) throw std::runtime_error("enqueue failed");
+    if (!consumers_[i].queue_->try_enqueue(elem)) throw std::runtime_error("enqueue failed");
     return pro->get_future();
 }
 
@@ -153,7 +153,7 @@ inline auto ThreadPool::submit(const uint32_t num, F &&f, Args &&...args)
     auto elem = new std::function<void()>([pro] { (*pro)(); });
     if (!elem) throw std::runtime_error("out of memory");
 
-    if (!consumers_[num].queue_->enqueue(elem)) throw std::runtime_error("enqueue failed");
+    if (!consumers_[num].queue_->try_enqueue(elem)) throw std::runtime_error("enqueue failed");
     return pro->get_future();
 }
 
@@ -174,7 +174,7 @@ inline auto ThreadPool::submit(F &&f, Args &&...args) ->
     if (!elem) throw std::runtime_error("out of memory");
 
     auto i = ++seq_ % get_consumer_num();
-    consumers_[i].queue_->enqueue(elem);
+    consumers_[i].queue_->try_enqueue(elem);
     return pro->get_future();
 }
 

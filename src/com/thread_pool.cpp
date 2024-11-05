@@ -3,12 +3,12 @@
 #include "thread_pool.h"
 
 namespace yan {
-ThreadPool::ThreadPool(const std::string &name, const int size) {
-    consumers_.resize(size);
-    for (auto i = 0; i < size; ++i) {
+ThreadPool::ThreadPool(const std::string &name, const int workers, const size_t queue_size) {
+    consumers_.resize(workers);
+    for (auto i = 0; i < workers; ++i) {
         auto &consumer = consumers_[i];
         auto &queue = consumer.queue_;
-        queue = std::make_shared<TQueue>();
+        queue = std::make_shared<TQueue>(queue_size);
 
         consumer.consumer_ = std::thread([this, queue, name, i]() {
             assert(queue);
