@@ -127,10 +127,10 @@ inline auto ThreadPool::submit(const std::string &key, F &&f, Args &&...args)
     using Type = typename std::result_of<F(Args...)>::type;
     auto pro = std::make_shared<packaged_task<Type>>(
         std::bind(std::forward<F>(f), std::forward<Args>(args)...));
-    if (!pro) throw std::runtime_error("out of memory");
+    if (!pro) return make_yan_exception_future<Type>(std::runtime_error("out of memory"));
 
     auto elem = new std::function<void()>([pro] { (*pro)(); });
-    if (!elem) throw std::runtime_error("out of memory");
+    if (!elem) return make_yan_exception_future<Type>(std::runtime_error("out of memory"));
 
     std::hash<std::string> hasher;
     auto i = hasher(key) % get_consumer_num();
@@ -148,10 +148,10 @@ inline auto ThreadPool::submit(const uint32_t num, F &&f, Args &&...args)
     using Type = typename std::result_of<F(Args...)>::type;
     auto pro = std::make_shared<packaged_task<Type>>(
         std::bind(std::forward<F>(f), std::forward<Args>(args)...));
-    if (!pro) throw std::runtime_error("out of memory");
+    if (!pro) return make_yan_exception_future<Type>(std::runtime_error("out of memory"));
 
     auto elem = new std::function<void()>([pro] { (*pro)(); });
-    if (!elem) throw std::runtime_error("out of memory");
+    if (!elem) return make_yan_exception_future<Type>(std::runtime_error("out of memory"));
 
     if (!consumers_[num].queue_->try_enqueue(elem)) throw std::runtime_error("enqueue failed");
     return pro->get_future();
@@ -168,10 +168,10 @@ inline auto ThreadPool::submit(F &&f, Args &&...args) ->
     using Type = typename std::result_of<F(Args...)>::type;
     auto pro = std::make_shared<packaged_task<Type>>(
         std::bind(std::forward<F>(f), std::forward<Args>(args)...));
-    if (!pro) throw std::runtime_error("out of memory");
+    if (!pro) return make_yan_exception_future<Type>(std::runtime_error("out of memory"));
 
     auto elem = new std::function<void()>([pro] { (*pro)(); });
-    if (!elem) throw std::runtime_error("out of memory");
+    if (!elem) return make_yan_exception_future<Type>(std::runtime_error("out of memory"));
 
     auto i = ++seq_ % get_consumer_num();
     consumers_[i].queue_->try_enqueue(elem);
