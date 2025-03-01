@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.16.3)
 
-project(yan)
+project(yan_db)
 
 option(BUILD_EXAMPLES "build example" OFF)
 option(BUILD_TESTS "build test" ON)
