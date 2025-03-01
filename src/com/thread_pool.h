@@ -47,25 +47,33 @@ public:
                                 future<typename std::result_of<F(Args...)>::type>>::type;
 
     template <typename F, typename... Args>
-    inline auto submit(const std::string &key, F &&f,
-                       Args &&...args) -> future<typename std::result_of<F(Args...)>::type>;
+    inline auto submit(const std::string &key, F &&f, Args &&...args)
+        -> future<typename std::result_of<F(Args...)>::type>;
 
     template <typename F, typename... Args>
-    inline auto submit(const uint32_t num, F &&f,
-                       Args &&...args) -> future<typename std::result_of<F(Args...)>::type>;
+    inline auto submit(const uint32_t num, F &&f, Args &&...args)
+        -> future<typename std::result_of<F(Args...)>::type>;
 
     inline int get_consumer_num() { return consumers_.size(); }
 
     /**
      * @brief one you stop this thread pool, please throw this object
      */
-    inline void stop();
+    void stop();
 
     /**
      * @brief there is no need to provide the following func, you can
      * calculate it by satistics the number of insertion and the execuation
      */
     // inline int get_approximate_queue_size();
+
+    /**
+     * @brief support the future continuation
+     */
+    inline void close() { stop(); }
+    inline bool closed() { return stop_; }
+    inline void submit(const std::function<void()> &task) { insert(task); }
+    inline bool try_executing_one() { return false; }
 
 private:
     std::vector<Consumer> consumers_;
